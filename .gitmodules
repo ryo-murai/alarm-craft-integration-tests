@@ -1,0 +1,3 @@
+[submodule "codebuild"]
+	path = codebuild
+	url = https://github.com/ryo-murai/alarm-craft-autorun-codebuild.git
