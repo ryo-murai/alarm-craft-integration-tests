@@ -1,0 +1,34 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  alarm-craft integration tests
+
+
+Resources:
+  Enrironment:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: environment/template.yaml
+      Tags:
+      - Key: Owner
+        Value: alarm-craft-integ-test
+
+  AlarmCraftToolExecution:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: codebuild/template.yaml
+      Parameters:
+        CodeBuildName: "larm-craft-integ-test-codebuild"
+        EventName: "larm-craft-integ-test-eventbridge"
+        AlarmConfigRepositoryType: GITHUB
+        AlarmConfigRepositoryCloneUrl: "https://github.com/ryo-murai/alarm-craft-integration-tests.git"
+        BranchNameAlarmConfig: "main"
+        EventSourceCfnStackNamePrefix: "alarm-craft-integ-test"
+        AlarmNotifSNSTopicArn: !GetAtt TestCases.Outputs.TopicArn
+        LogGroupRetentionInDays: "1"
+
+  TestCases:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: tests/template.yaml
+
+  

@@ -1,0 +1,42 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Alarm Craft Test Environment
+
+Globals:
+  Function:
+    Runtime: python3.11
+    MemorySize: 128
+    Timeout: 5
+
+Resources:
+  StandaloneFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: "acmr-lambda-standalone"
+      CodeUri: handlers
+      Handler: standalone.always_error
+
+  RestApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: "acmr-lambda-restapi"
+      CodeUri: handlers
+      Handler: restapi.resp500
+      Events:
+        RestApiInvocationEvent:
+          Type: Api
+          Properties:
+            Path: /hello
+            Method: get
+            RestApiId: !Ref RestAPI
+
+  RestAPI:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: "acmr-apigateway-rest"
+      StageName: "api"
+      EndpointConfiguration:
+        Type: REGIONAL
+      DisableExecuteApiEndpoint: false
+
