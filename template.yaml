@@ -5,6 +5,11 @@ Description: >
 
 Resources:
   Enrironment:
+    Metadata:
+      cfn-lint:
+        config:
+          ignore_checks:
+            - W3002
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: environment/template.yaml
@@ -13,6 +18,11 @@ Resources:
         Value: alarm-craft-integ-test
 
   AlarmCraftToolExecution:
+    Metadata:
+      cfn-lint:
+        config:
+          ignore_checks:
+            - W3002
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: codebuild/template.yaml
@@ -27,8 +37,17 @@ Resources:
         LogGroupRetentionInDays: "1"
 
   TestCases:
+    Metadata:
+      cfn-lint:
+        config:
+          ignore_checks:
+            - W3002
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: tests/template.yaml
+      Parameters:
+        RestApiId: !GetAtt Enrironment.Outputs.RestApiId
+        LambdaStandaloneFunctionArn: !GetAtt Enrironment.Outputs.LambdaStandaloneFunctionArn
+
 
   

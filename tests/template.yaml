@@ -3,6 +3,12 @@ Transform: AWS::Serverless-2016-10-31
 Description: >
   Alarm Craft Test Cases
 
+Parameters:
+  RestApiId:
+    Type: String
+  LambdaStandaloneFunctionArn:
+    Type: String
+
 Globals:
   Function:
     Runtime: python3.11
@@ -10,55 +16,62 @@ Globals:
     Timeout: 29
 
 Resources:
-  # TestDriverStateMachine:
-  #   Type: AWS::Serverless::StateMachine
-  #   Properties:
-  #     Name: "actc-sfn-test"
-  #     DefinitionUri: sfn.asl.json
-  #     # DefinitionSubstitutions:
-  #       # PollingFunction: !GetAtt PollingFunction.Arn
-  #       # ImportCORequestFunction: !GetAtt ImportCoRequestFunction.Arn
-  #       # ImportCancelRequestFunction: !GetAtt ImportCancelRequestFunction.Arn
-  #       # ExportResultFunction: !GetAtt ExportResultFunction.Arn
-  #       # ExportCancelResultFunction: !GetAtt ExportCancelResultFunction.Arn
-  #     Role: !GetAtt StateMachineRole.Arn
-  #     Logging:
-  #       Level: "ALL"
-  #       IncludeExecutionData: true
-  #       Destinations:
-  #         - CloudWatchLogsLogGroup:
-  #             LogGroupArn: !GetAtt StateMachineLogGroup.Arn
+  TestDriverStateMachine:
+    Type: AWS::Serverless::StateMachine
+    Properties:
+      Name: "actc-sfn-test"
+      DefinitionUri: integ-tests-asl.json
+      DefinitionSubstitutions:
+        TestDriverFunction: !GetAtt AlarmTestDriverFunction.Arn
+        ApiId: !Ref RestApiId
+        LambdaStandaloneFunction: !Ref LambdaStandaloneFunctionArn
+        TestVerificationFunction: !GetAtt AlarmTestVerificationFunction.Arn
+      Role: !GetAtt StateMachineRole.Arn
+      Logging:
+        Level: "ALL"
+        IncludeExecutionData: true
+        Destinations:
+          - CloudWatchLogsLogGroup:
+              LogGroupArn: !GetAtt StateMachineLogGroup.Arn
 
-  # StateMachineLogGroup:
-  #   Type: AWS::Logs::LogGroup
-  #   Properties:
-  #     LogGroupName: "/aws/stepfunctions/actc-sfn-test-execution-log"
-  #     RetentionInDays: 3
+  StateMachineLogGroup:
+    UpdateReplacePolicy: Delete
+    DeletionPolicy: Delete
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: "/aws/stepfunctions/actc-sfn-test-execution-log"
+      RetentionInDays: 3
 
-  # StateMachineRole:
-  #   Type: AWS::IAM::Role
-  #   Properties:
-  #     AssumeRolePolicyDocument:
-  #       Version: "2012-10-17"
-  #       Statement:
-  #         - Effect: Allow
-  #           Principal:
-  #             Service:
-  #               - states.amazonaws.com
-  #           Action:
-  #             - sts:AssumeRole
-  #     Path: /
-  #     ManagedPolicyArns:
-  #       # - arn:aws:iam::aws:policy/service-role/AWSLambdaRole
-  #       - arn:aws:iam::aws:policy/CloudWatchLogsFullAccess
+  StateMachineRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - states.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaRole
+        - arn:aws:iam::aws:policy/CloudWatchLogsFullAccess
 
   AlarmTestDriverFunction:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: "actc-lambda-test-driver"
       CodeUri: handlers
-      Handler: drive_tests.handle
+      Handler: drive_tests.setup
 
+  AlarmTestVerificationFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: "actc-lambda-test-asserter"
+      CodeUri: handlers
+      Handler: drive_tests.verify
 
   AlarmDestinationSNSTopic:
     Type: AWS::SNS::Topic
@@ -81,7 +94,10 @@ Resources:
             Topic: !Ref AlarmDestinationSNSTopic
  
   AlarmRecordTable:
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Type: AWS::Serverless::SimpleTable
+      
 
 Outputs:
   TopicArn:

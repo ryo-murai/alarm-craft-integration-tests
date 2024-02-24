@@ -1,0 +1,62 @@
+{
+    "Comment": "Run Tests",
+    "StartAt": "Set up tests",
+    "States": {
+      "Set up tests": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::lambda:invoke",
+        "OutputPath": "$.Payload",
+        "Parameters": {
+          "FunctionName": "${TestDriverFunction}"
+        },
+        "Next": "Invoke API Gateway"
+      },
+      "Invoke API Gateway": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::apigateway:invoke",
+        "Parameters": {
+          "ApiEndpoint": "${ApiId}.execute-api.ap-northeast-1.amazonaws.com",
+          "Method": "GET",
+          "Stage": "api",
+          "Path": "execute",
+          "AuthType": "IAM_ROLE"
+        },
+        "ResultSelector": {
+          "ResponseBody.$": "$.ResponseBody"
+        },
+        "Catch": [
+          {
+            "ErrorEquals": ["ApiGateway.500"],
+            "Next": "Lambda Invoke"
+          }
+        ],
+        "Next": "Lambda Invoke"
+      },
+      "Lambda Invoke": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::lambda:invoke",
+        "OutputPath": "$.Payload",
+        "Parameters": {
+          "Payload.$": "$",
+          "FunctionName": "${LambdaStandaloneFunction}"
+        },
+        "Catch": [
+          {
+            "ErrorEquals": ["Exception"],
+            "Next": "Assert Results"
+          }
+        ],
+        "Next": "Assert Results"
+      },
+      "Assert Results": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::lambda:invoke",
+        "OutputPath": "$.Payload",
+        "Parameters": {
+          "Payload.$": "$",
+          "FunctionName": "${TestVerificationFunction}"
+        },
+        "End": true
+      }
+    }
+  }

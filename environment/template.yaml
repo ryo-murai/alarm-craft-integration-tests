@@ -14,20 +14,24 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: "acmr-lambda-standalone"
-      CodeUri: handlers
-      Handler: standalone.always_error
+      Handler: index.always_error
+      InlineCode: |
+        def always_error(event, context):
+          raise Exception("error")
 
   RestApiFunction:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: "acmr-lambda-restapi"
-      CodeUri: handlers
-      Handler: restapi.resp500
+      Handler: 'index.resp500'
+      InlineCode: |
+        def resp500(event, context):
+          return {"statusCode": 500}
       Events:
         RestApiInvocationEvent:
           Type: Api
           Properties:
-            Path: /hello
+            Path: /execute
             Method: get
             RestApiId: !Ref RestAPI
 
@@ -40,3 +44,8 @@ Resources:
         Type: REGIONAL
       DisableExecuteApiEndpoint: false
 
+Outputs:
+  RestApiId:
+    Value: !Ref RestAPI
+  LambdaStandaloneFunctionArn:
+    Value: !GetAtt StandaloneFunction.Arn
