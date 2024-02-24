@@ -27,12 +27,12 @@ Resources:
     Properties:
       TemplateURL: codebuild/template.yaml
       Parameters:
-        CodeBuildName: "larm-craft-integ-test-codebuild"
-        EventName: "larm-craft-integ-test-eventbridge"
+        CodeBuildName: "alarm-craft-integ-test-codebuild"
+        EventName: "alarm-craft-integ-test-eventbridge"
         AlarmConfigRepositoryType: GITHUB
         AlarmConfigRepositoryCloneUrl: "https://github.com/ryo-murai/alarm-craft-integration-tests.git"
         BranchNameAlarmConfig: "main"
-        EventSourceCfnStackNamePrefix: "alarm-craft-integ-test"
+        EventSourceCfnStackNamePrefix: !Sub "${AWS::StackName}-Enrironment"
         AlarmNotifSNSTopicArn: !GetAtt TestCases.Outputs.TopicArn
         LogGroupRetentionInDays: "1"
 

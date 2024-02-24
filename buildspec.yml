@@ -1,0 +1,7 @@
+version: 0.2
+
+phases:
+  build:
+    commands:
+    - python -m pip install alarm-craft
+    - alarm-craft -f -n ${topic} -c alarm-config/alarm-config.yaml

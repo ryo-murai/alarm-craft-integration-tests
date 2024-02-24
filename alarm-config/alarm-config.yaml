@@ -1,0 +1,22 @@
+globals:
+  resource_filter:
+    target_resource_tags:
+      Owner: alarm-craft-integ-test
+  alarm:
+    alarm_name_prefix: alarm-craft-integ-test-autogen-
+    alarm_tagging:
+      createdFor: alarm-craft-integ-test
+
+
+resources:
+  lambda:
+    target_resource_type: lambda:function
+    alarm:
+      metrics:
+      - Errors
+
+  apigateway:
+    target_resource_type: apigateway:restapi
+    alarm:
+      metrics:
+      - 5XXError
